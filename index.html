@@ -148,6 +148,161 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-1_OC对象" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/07/03/1_OC%E5%AF%B9%E8%B1%A1/">OC对象</a>
+    </h1>
+  
+
+        
+        <a href="/2022/07/03/1_OC%E5%AF%B9%E8%B1%A1/" class="archive-article-date">
+  	<time datetime="2022-07-03T14:42:11.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-07-03</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="1、OC的对象、类主要是C-C-的什么数据结构实现的？"><a href="#1、OC的对象、类主要是C-C-的什么数据结构实现的？" class="headerlink" title="1、OC的对象、类主要是C\C++的什么数据结构实现的？"></a>1、OC的对象、类主要是C\C++的什么数据结构实现的？</h2><ul>
+<li>  结构体</li>
+</ul>
+<h2 id="2、把OC代码转换成c-代码"><a href="#2、把OC代码转换成c-代码" class="headerlink" title="2、把OC代码转换成c++代码"></a>2、把OC代码转换成c++代码</h2><ul>
+<li> iPhone架构分类：</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>模拟器</th>
+<th>i386架构</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>32bit真机</td>
+<td>armv7</td>
+</tr>
+<tr>
+<td>64bit真机</td>
+<td>arm64</td>
+</tr>
+</tbody></table>
+<ul>
+<li><p>指令：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"> 直接转换：</span><br><span class="line">  clang -rewrite-objc main.m -o main.cpp</span><br><span class="line">iPhone平台转换：</span><br><span class="line">xcrun -sdk iphoneos clang -arch arm64 -rewrite-objc main.m -o main.cpp</span><br></pre></td></tr></table></figure></li>
+<li><p>在main.cpp文件中，搜索NSObject_IMPL可以发现</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"> struct NSObject_IMPL &#123;</span><br><span class="line">    Class isa; // 指针 8个字节</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></li>
+<li><p>内存大小</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">// 先导入头文件如下</span><br><span class="line">#import &lt;Foundation/Foundation.h&gt;</span><br><span class="line">#import &lt;objc/runtime.h&gt;</span><br><span class="line">#import &lt;malloc/malloc.h&gt;</span><br><span class="line"></span><br><span class="line">int main(int argc, const char * argv[]) &#123;</span><br><span class="line">    @autoreleasepool &#123;</span><br><span class="line">        NSObject *obj = [[NSObject alloc] init];</span><br><span class="line">        </span><br><span class="line">        // 获取NSObject类的实例对象的大小</span><br><span class="line">        NSLog(@&quot;实例对象的大小-%zd&quot;,class_getInstanceSize([NSObject class]));</span><br><span class="line">        </span><br><span class="line">        // 获取obj指针指向内存的大小</span><br><span class="line">        NSLog(@&quot;指针指向内存的大小-%zd&quot;,malloc_size((__bridge const void *)(obj)));</span><br><span class="line">        </span><br><span class="line">        NSLog(@&quot;Hello, World!&quot;);</span><br><span class="line">        </span><br><span class="line">        /**打印结果如下：</span><br><span class="line">         2021-12-23 19:31:15.893600+0800 01-oc本质[1512:18220] 实例对象的大小-8</span><br><span class="line">         2021-12-23 19:31:15.893932+0800 01-oc本质[1512:18220] 指针指向内存的大小-16</span><br><span class="line">         2021-12-23 19:31:15.893962+0800 01-oc本质[1512:18220] Hello, World!</span><br><span class="line">         */</span><br><span class="line">    &#125;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>那么内存的大小到底是多少呢？</p>
+</li>
+<li><p>下载最新的苹果objc开源代码:<a target="_blank" rel="noopener" href="https://opensource.apple.com/tarballs/objc4/">https://opensource.apple.com/tarballs/objc4/</a></p>
+</li>
+<li><p>全局搜索“size_t instanceSize”，可以看到这段源码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">size_t instanceSize(size_t extraBytes) &#123;</span><br><span class="line">       size_t size = alignedInstanceSize() + extraBytes;</span><br><span class="line">       // CF requires all objects be at least 16 bytes.</span><br><span class="line">       // 注释大概意思是说，所有的对象最少要16个字节</span><br><span class="line">       if (size &lt; 16) size = 16;</span><br><span class="line">       return size;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure></li>
+</ul>
+<p>**</p>
+<h2 id=""><a href="#" class="headerlink" title=""></a></h2><h4 id="问题：一个NSObject对象占用多少内存？"><a href="#问题：一个NSObject对象占用多少内存？" class="headerlink" title="问题：一个NSObject对象占用多少内存？"></a>问题：一个NSObject对象占用多少内存？</h4><h5 id="1、系统分配了16个字节NSObject对象"><a href="#1、系统分配了16个字节NSObject对象" class="headerlink" title="1、系统分配了16个字节NSObject对象"></a>1、系统分配了16个字节NSObject对象</h5><h5 id="2、但是NSObject对象内部只使用了8个字节的空间"><a href="#2、但是NSObject对象内部只使用了8个字节的空间" class="headerlink" title="2、但是NSObject对象内部只使用了8个字节的空间"></a>2、但是NSObject对象内部只使用了8个字节的空间</h5><p>**</p>
+<h2 id="3、进一步窥探内存细节"><a href="#3、进一步窥探内存细节" class="headerlink" title="3、进一步窥探内存细节"></a>3、进一步窥探内存细节</h2><ul>
+<li>运行XCode，打断点</li>
+<li>设置– Debug–&gt; Debug Workflow –&gt; Always Show Disassembly</li>
+<li>把对象地址打印出来，可以发现只有前面8个字节有内容，后面8个字节是空的</li>
+</ul>
+<p><img src="https://img-blog.csdnimg.cn/1d9cc8268a5949b5a9d657855426365a.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBASkhfQ2Fv,size_20,color_FFFFFF,t_70,g_se,x_16#pic_center" alt="在这里插入图片描述"></p>
+<h2 id="4、通过LLDB指令窥探细节"><a href="#4、通过LLDB指令窥探细节" class="headerlink" title="4、通过LLDB指令窥探细节"></a>4、通过LLDB指令窥探细节</h2><ul>
+<li>常用LLDB指令</li>
+<li>（大小端模式）苹果一般是小端模式：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"> 2019 = 2*10^3+0*10^2+1*10^1+9*10^0</span><br><span class="line">可以称高位对应的权重（10^3）大，低位对应的权重小。</span><br></pre></td></tr></table></figure>
+小端就是先存储权重小的，大端就是先存储权重大的<br>举例：0x1234<br>不要记忆高地址，低地址，看下图<br>(或者记住：正常人写阿拉伯数字就是大端模式，从左往右开始写)<br>从左到右，地址从低到高</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>小端模式</th>
+<th>4</th>
+<th>3</th>
+<th>2</th>
+<th>1</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>大端模式</td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+<td>4</td>
+</tr>
+<tr>
+<td>–</td>
+<td>低地址</td>
+<td>–</td>
+<td>–</td>
+<td>高地址</td>
+</tr>
+</tbody></table>
+ <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"> </span><br><span class="line"> </span><br><span class="line"> -- print、p : 打印</span><br><span class="line"> -- po : 打印对象</span><br><span class="line">-- 读取内存</span><br><span class="line">   1、mermory read/数量+格式+字节数  内存地址</span><br><span class="line">       例如：x/3xw 0x10010</span><br><span class="line">       </span><br><span class="line">        修改内存中的值</span><br><span class="line">        memory write 内存地址 数值</span><br><span class="line">        mermory write 0x00000010 10</span><br><span class="line">/*</span><br><span class="line">(lldb) memory read 0x0000000100605230</span><br><span class="line">0x100605230: 89 50 60 80 ff ff 1d 01 00 00 00 00 00 00 00 00  .P`.............</span><br><span class="line">0x100605240: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................</span><br><span class="line">(lldb) memory write 0x0000000100605234 7 </span><br><span class="line">(lldb) memory read 0x0000000100605230</span><br><span class="line">0x100605230: 89 50 60 80 07 ff 1d 01 00 00 00 00 00 00 00 00  .P`.............</span><br><span class="line">0x100605240: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................</span><br><span class="line"></span><br><span class="line">可以看到内存值由 89 50 60 80 ff</span><br><span class="line">改为了          89 50 60 80 07 </span><br><span class="line">*/</span><br><span class="line">   2、格式：x 16进制， f 浮点数， d 10进制</span><br><span class="line">   3、字节大小：</span><br><span class="line">   		b: byte        1字节</span><br><span class="line">   		h: half word   2字节</span><br><span class="line">   		w: word        4字节</span><br><span class="line">   		g: giant word  8字节</span><br><span class="line">   		</span><br><span class="line"> /*  打印结果</span><br><span class="line">(lldb) p obj</span><br><span class="line">(NSObject *) $1 = 0x0000000100605230</span><br><span class="line">(lldb) po obj</span><br><span class="line">&lt;NSObject: 0x100605230&gt;</span><br><span class="line"></span><br><span class="line">(lldb) memory read 0x0000000100605230</span><br><span class="line">0x100605230: 89 50 60 80 ff ff 1d 01 00 00 00 00 00 00 00 00  .P`.............</span><br><span class="line">0x100605240: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................</span><br><span class="line">(lldb) x 0x0000000100605230</span><br><span class="line">0x100605230: 89 50 60 80 ff ff 1d 01 00 00 00 00 00 00 00 00  .P`.............</span><br><span class="line">0x100605240: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................</span><br><span class="line">(lldb) x/3xg 0x0000000100605230</span><br><span class="line">0x100605230: 0x011dffff80605089 0x0000000000000000</span><br><span class="line">0x100605240: 0x0000000000000000</span><br><span class="line">(lldb) x/3xh 0x0000000100605230</span><br><span class="line">0x100605230: 0x5089 0x8060 0xffff</span><br><span class="line">(lldb) x/3xw 0x0000000100605230</span><br><span class="line">0x100605230: 0x80605089 0x011dffff 0x00000000</span><br><span class="line">(lldb) x/3xb 0x0000000100605230</span><br><span class="line">0x100605230: 0x89 0x50 0x60</span><br><span class="line">(lldb) x/4xw 0x0000000100605230</span><br><span class="line">0x100605230: 0x80605089 0x011dffff 0x00000000 0x00000000</span><br><span class="line">(lldb) x/4dw 0x0000000100605230</span><br><span class="line">0x100605230: -2141171575</span><br><span class="line">0x100605234: 18743295</span><br><span class="line">0x100605238: 0</span><br><span class="line">0x10060523c: 0</span><br><span class="line">(lldb) x/4fw 0x0000000100605230</span><br><span class="line">0x100605230: -8.8450982E-39</span><br><span class="line">0x100605234: 2.9020014E-38</span><br><span class="line">0x100605238: 0</span><br><span class="line">0x10060523c: 0</span><br><span class="line">(lldb) </span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
+
+<h2 id="5、注意的地方"><a href="#5、注意的地方" class="headerlink" title="5、注意的地方"></a>5、注意的地方</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">定义这样一个类</span><br><span class="line">@interface Student : NSObject</span><br><span class="line">&#123;</span><br><span class="line">    @public</span><br><span class="line">    int _no;</span><br><span class="line">    int _age;</span><br><span class="line">    int _height;</span><br><span class="line">&#125;</span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@implementation Student</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">int main(int argc, const char * argv[]) &#123;</span><br><span class="line">    @autoreleasepool &#123;</span><br><span class="line">        NSLog(@&quot;%zd&quot;, sizeof(struct Student_IMPL)); // 打印结果24</span><br><span class="line">        </span><br><span class="line">        Student *stu = [[Student alloc] init];</span><br><span class="line">        </span><br><span class="line">        NSLog(@&quot;%zd&quot;, class_getInstanceSize([Student class])); // 打印结果24</span><br><span class="line">        NSLog(@&quot;%zd&quot;, malloc_size((__bridge const void *)(stu))); // 打印结果32</span><br><span class="line">    &#125;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>分配给stu对象的内存是32，实际使用的是24</li>
+<li>因为在iOS系统里面，给对象分配的最少内存单位是16，所以说，对象的内存大小是16的倍数</li>
+</ul>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">iOS底层原理</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2022/07/03/1_OC%E5%AF%B9%E8%B1%A1/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-iOS-Design-Mode" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -459,6 +614,10 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">iOS底层原理</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">设计模式</a>
               </li>
             
@@ -542,7 +701,7 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
     
     	<section class="tools-section tools-section-me" q-show="aboutme">
   	  	
-  	  		<div class="aboutme-wrap" id="js-aboutme">很惭愧&lt;br&gt;&lt;br&gt;只做了一点微小的工作&lt;br&gt;谢谢大家</div>
+  	  		<div class="aboutme-wrap" id="js-aboutme">曹均华&lt;br&gt;&lt;br&gt;iOS开发爱好者&lt;br&gt;谢谢大家!</div>
   	  	
     	</section>
     
